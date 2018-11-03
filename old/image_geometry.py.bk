@@ -1,0 +1,130 @@
+import numpy as np
+import tensorflow as tf
+
+from .tf_utils import batch_slice
+
+class ImageProcessor(object):
+    def __init__(self, img_dims, K, camera_height, window_dims):
+        self.sess = None
+
+        self.img_dims = img_dims
+
+        # Parse camera intrinsics
+        self.fx = K[0]
+        self.fy = K[4]
+        self.ppx = K[2]
+        self.ppy = K[5]
+        self.d0 = camera_height
+
+        # Compute image patch dimensions
+        U = np.abs(2.*(self.x2u_transform(0.5*np.array(window_dims))\
+                - self.x2u_transform(np.zeros(2))))
+        self.patch_dims = (int(U[0]), int(U[1]))
+
+        # Other parameters
+        self.w_pad = int(np.ceil(np.sqrt(img_dims[0]**2 + img_dims[1]**2))\
+                + max(self.patch_dims))
+
+        # Build cropping tensorflow graph
+        self.rgb_image_ph = tf.placeholder(tf.float32, shape=(None,)+tuple(img_dims)+(3,))
+        self.depth_image_ph = tf.placeholder(tf.float32, shape=(None,)+tuple(img_dims)+(1,))
+        self.u_ph = tf.placeholder(tf.float32, shape=(None,2))
+        self.theta_ph = tf.placeholder(tf.float32, shape=(None,))
+
+        self.rgb_image_out, self.depth_image_out = self._build_crop(
+                self.rgb_image_ph, self.depth_image_ph, self.u_ph, self.theta_ph)
+
+        # Tensorflow session
+        gpu_ops = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_ops)
+        self.sess = tf.Session(config=config)
+
+    def __del__(self):
+        if self.sess:
+            self.sess.close()
+
+    def _build_crop(self, rgb_image_ph, depth_image_ph, u_ph, theta_ph):
+        # Pad and rotate images
+        rgb_padded = tf.image.resize_image_with_crop_or_pad(
+                rgb_image_ph, self.w_pad, self.w_pad)
+        depth_padded = tf.image.resize_image_with_crop_or_pad(
+                depth_image_ph, self.w_pad, self.w_pad)
+        rgb_rotated = tf.contrib.image.rotate(rgb_padded, theta_ph, 
+                interpolation='BILINEAR')
+        depth_rotated = tf.contrib.image.rotate(depth_padded, theta_ph, 
+                interpolation='BILINEAR')
+
+        # Compute rotated coordinates
+        uu0_arr = tf.slice(u_ph-self.ppx, [0,0], [-1,1])
+        vv0_arr = tf.slice(u_ph-self.ppy, [0,1], [-1,1])
+        cos_arr = tf.cos(tf.reshape(theta_ph, (-1,1)))
+        sin_arr = tf.sin(tf.reshape(theta_ph, (-1,1)))
+        u1_arr = uu0_arr*cos_arr + vv0_arr*sin_arr + self.w_pad/2.
+        v1_arr = -uu0_arr*sin_arr + vv0_arr*cos_arr + self.w_pad/2.
+        u1_iarr = tf.cast(tf.round(u1_arr), tf.int32)
+        v1_iarr = tf.cast(tf.round(v1_arr), tf.int32)
+
+        # Crop images
+        u_dpatch = tf.constant(self.patch_dims[0], dtype=tf.int32)
+        v_dpatch = tf.constant(self.patch_dims[1], dtype=tf.int32)
+        u_rpatch = tf.constant(int(self.patch_dims[0]/2), dtype=tf.int32)
+        v_rpatch = tf.constant(int(self.patch_dims[1]/2), dtype=tf.int32)
+
+        rgb_patches = batch_slice(
+                [rgb_rotated, u1_iarr-u_rpatch, v1_iarr-v_rpatch],
+                lambda imgs, w0, h0: tf.image.crop_to_bounding_box(
+                    imgs, h0, w0, u_dpatch, v_dpatch),
+                tf.size(u1_iarr))
+
+
+
+        rgb_patches = tf.image.crop_to_bounding_box(rgb_rotated, 
+                offset_width=tf.squeeze(u1_iarr-u_rpatch), 
+                offset_height=tf.squeeze(v1_iarr-v_rpatch), 
+                target_width=tf.squeeze(u_dpatch), 
+                target_height=tf.squeeze(v_dpatch))
+        depth_patches = tf.image.crop_to_bounding_box(depth_rotated, 
+                offset_width=tf.squeeze(u1_iarr-u_rpatch), 
+                offset_height=tf.squeeze(v1_iarr-v_rpatch), 
+                target_width=tf.squeeze(u_dpatch), 
+                target_height=tf.squeeze(v_dpatch))
+
+        return rgb_patches, depth_patches
+
+    def get_patch_dims(self):
+        return self.patch_dims
+
+    def x2u_transform(self, X):
+        if len(X.shape) > 1:
+            U = np.zeros([X.shape[0], 2])
+            U[:,0] = X[:,1] * self.fy / self.d0 + self.ppy
+            U[:,1] = X[:,0] * self.fx / self.d0 + self.ppx
+        else:
+            U = np.zeros(2)
+            U[0] = X[1] * self.fy / self.d0 + self.ppy
+            U[1] = X[0] * self.fx / self.d0 + self.ppx
+
+        return U
+
+    def u2x_transform(self, U):
+        if len(U.shape) > 1:
+            X = np.zeros([U.shape[0], 2])
+            X[:,0] = self.d0 * (U[:,1] - self.ppy) / self.fy
+            X[:,1] = self.d0 * (U[:,0] - self.ppx) / self.fx
+        else:
+            X = np.zeros(2)
+            X[0] = self.d0 * (U[1] - self.ppy) / self.fy
+            X[1] = self.d0 * (U[0] - self.ppx) / self.fx
+
+        return X
+
+    def crop_image(self, rgb_imgs, depth_imgs, p_arr, dims):
+        # Transform position to pixel coordinates
+        u_arr = self.x2u_transform(p_arr[:,0:2])
+        theta = p_arr[:,2]
+
+        return self.sess.run([self.rgb_image_out, self.depth_image_out], feed_dict={
+                self.rgb_image_ph: rgb_imgs,
+                self.depth_image_ph: depth_imgs,
+                self.u_ph: u_arr,
+                self.theta_ph: theta})
