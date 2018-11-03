@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 from pyquaternion import Quaternion as Quat
 
-from pointwise import PointwiseHomographyTransformer
-from planar import PlanarHomographyTransformer
+from homography import PointwiseHomographyTransformer, PlanarHomographyTransformer
 
 K = np.array([
     [618.9769897460938, 0.0, 324.6860046386719],
