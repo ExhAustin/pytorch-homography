@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-class BilinearInterp(object):
-    pass
+#class BilinearInterp(object):
+#    pass
 
 class PointInterp2d(object):
     def __init__(self, x, y, z):

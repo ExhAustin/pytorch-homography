@@ -5,7 +5,7 @@ import torch
 import torchvision
 
 from core import DepthImgTransformer
-from .utils.interpolation import BilinearInterp
+from .utils.image_warp import warp_img_batch
 
 class PlanarHomographyTransformer(DepthImgTransformer):
 
@@ -29,13 +29,11 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         M = (w0/w1).view(-1,1,1) * torch.matmul(self.K, x)
 
         # Transform image
-        imgs1 = batch
+        imgs1 = warp_img_batch(imgs0, M)
         """
         imgs = imgs0[0,:,:,:].squeeze().cpu().numpy()
         M_np = M[0,:,:].cpu().numpy()
         imgs1 = cv2.warpPerspective(imgs[:,:,0:3], M_np, dsize=(img_dims[1], img_dims[0]))
         """
 
-        return imgs1
-
-        #return imgs1.cpu().numpy()
+        return imgs1.cpu().numpy()
