@@ -5,6 +5,7 @@ import torch
 import torchvision
 
 from core import DepthImgTransformer
+from .utils.interpolation import BilinearInterp
 
 class PlanarHomographyTransformer(DepthImgTransformer):
 
