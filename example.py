@@ -33,7 +33,9 @@ if __name__ == '__main__':
     print("Time elapsed: {} seconds.".format(end-start))
 
     # Visualize
-    cv2.imshow('image', (1000*img[:,:,3]).astype('uint8'))
-    cv2.imshow('new_image', (1000*new_img[0,:,:,3]).astype('uint8'))
+    cv2.imshow('image', img[:,:,0:3].astype('uint8'))
+    cv2.imshow('new_image', new_img[0,:,:,0:3].astype('uint8'))
+    #cv2.imshow('image', (1000*img[:,:,3]).astype('uint8'))
+    #cv2.imshow('new_image', (1000*new_img[0,:,:,3]).astype('uint8'))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
