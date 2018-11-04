@@ -17,19 +17,21 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         imgs1 = torch.empty(imgs0.shape, dtype=torch.float32).cuda()
 
         # Estimate depth of entire image
-        w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2)) 
-        w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32)
+        w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2)).cuda()
+        w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32).cuda()
         w0 = w_sum / w_valid
-        w1 = w0 + H[:,2,3]
+        dw = torch.tensor(-H[:,2,3], dtype=torch.float32).cuda() #assume orthogonal
+        w1 = w0 + dw
 
         # Projective transformation matrix
         t_mat = torch.zeros(H[:,0:3,0:3].shape, dtype=torch.float32).cuda()
         t_mat[:,0:3,2] = H[:,0:3,3]
-        x = torch.matmul(H[:,0:3,0:3], self.Kinv) + t_mat
+        x = torch.matmul(H[:,0:3,0:3], self.Kinv) - t_mat
         M = (w0/w1).view(-1,1,1) * torch.matmul(self.K, x)
 
-        # Transform image
+        # Transform image & update depth
         imgs1 = warp_img_batch(imgs0, M)
+        imgs1[:,:,:,3] = imgs1[:,:,:,3] + dw.view(-1,1,1) #assume orthogonal
         """
         imgs = imgs0[0,:,:,:].squeeze().cpu().numpy()
         M_np = M[0,:,:].cpu().numpy()

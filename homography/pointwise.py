@@ -19,8 +19,8 @@ class PointwiseHomographyTransformer(DepthImgTransformer):
         idc_mat[:,:,0] = torch.arange(img_dims[0]).view(-1,1)
         idc_mat[:,:,1] = torch.arange(img_dims[1]).view(1,-1)
         idc_mat[:,:,2] = torch.ones(img_dims[0], img_dims[1])
-        points_i0 = idc_mat.view(1, 3, -1)
-        points_v = imgs0.view(N, n_channels, -1)
+        points_i0 = idc_mat.permute(2,0,1).view(1, 3, -1)
+        points_v = imgs0.permute(0,3,1,2).view(N, n_channels, -1)
 
         # Compute projective transformation matrix (M = w0/w1*P)
         t_mat = torch.zeros(H[:,0:3,0:3].shape, dtype=torch.float32).cuda()
