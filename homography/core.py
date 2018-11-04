@@ -5,6 +5,15 @@ import torch
 import torchvision
 
 class DepthImgTransformer(object):
+    """
+    Base class for image transformations
+
+        Camera transformation frame:
+            +x axis - to the top of image
+            +y axis - to the left of image
+            +z axis - into the image
+    """
+
     def __init__(self, K):
         # Camera intrinsics
         self.K = torch.from_numpy(K.astype('float32')).cuda()
@@ -38,7 +47,7 @@ class DepthImgTransformer(object):
         dxs = torch.from_numpy(np.array(dxs).astype('float32'))
         dqs = torch.from_numpy(np.array(dqs).astype('float32'))
 
-        # Transformation matrix (pixel trans = - camera trans)
+        # Transformation matrix
         H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
         H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
         H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
