@@ -28,9 +28,12 @@ if __name__ == '__main__':
     dx = [0.05,0.03,0.3]
     dq = Quat(axis=[0,0,1], angle=0.5)
 
+    dxs = np.stack([dx, dx], axis=0)
+    dqs = np.stack([dq, dq], axis=0)
+
     # Load images
-    img1 = load_imgae("test_rgb1.png", "test_depth1.png")
-    img1 = load_imgae("test_rgb2.png", "test_depth2.png")
+    img1 = load_image("test_rgb1.png", "test_depth1.png")
+    img2 = load_image("test_rgb2.png", "test_depth2.png")
     imgs = np.stack([img1, img2], axis=0)
 
     # Transform
@@ -38,7 +41,7 @@ if __name__ == '__main__':
 
     transformer = PlanarHomographyTransformer(K)
     #new_img = transformer.transform(img1, dx, dq)
-    new_imgs = transformer.transform_batch(imgs, dx, dq)
+    new_imgs = transformer.transform_batch(imgs, dxs, dqs)
 
     end = time.time()
     print("Time elapsed: {} seconds.".format(end-start))
