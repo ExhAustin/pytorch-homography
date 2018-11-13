@@ -19,8 +19,8 @@ if __name__ == '__main__':
 
     # Load image
     img = np.empty([480, 640, 4]).astype('float32')
-    img[:,:,0:3] = cv2.imread("test_rgb.png", flags=cv2.IMREAD_COLOR)
-    img[:,:,3] = cv2.imread("test_depth.png", flags=cv2.IMREAD_UNCHANGED) / 1000.
+    img[:,:,0:3] = cv2.imread("test_rgb1.png", flags=cv2.IMREAD_COLOR)
+    img[:,:,3] = cv2.imread("test_depth1.png", flags=cv2.IMREAD_UNCHANGED) / 1000.
 
     # Transform
     start = time.time()

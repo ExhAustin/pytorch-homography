@@ -46,7 +46,7 @@ def warp_img_batch(imgs, M):
     weights[:,:,2] = (points_i0[:,0,:] - i0_floor[:,0,:]) * (i0_ceil[:,1,:] - points_i0[:,1,:])
     weights[:,:,3] = (points_i0[:,0,:] - i0_floor[:,0,:]) * (points_i0[:,1,:] - i0_floor[:,1,:])
 
-    i0_floor[:,2,:] = torch.arange(N).view(-1,1,1)
+    i0_floor[:,2,:] = torch.arange(N).view(-1,1)
     i0_floor = i0_floor.type(torch.cuda.LongTensor)
     i0_ceil = i0_ceil.type(torch.cuda.LongTensor)
     values[:,:,:,0] = imgs[i0_floor[:,2,:], i0_floor[:,0,:], i0_floor[:,1,:], :]
