@@ -19,14 +19,14 @@ def load_image(rgb_file, depth_file):
 
     return img
 
-def visualize(img):
-    cv2.imshow('image', img[:,:,0:3].astype('uint8'))
-    cv2.imshow('image_depth', (1000*img[:,:,3]).astype('uint8'))
+def visualize(img, title=""):
+    cv2.imshow(title+'_rgb', img[:,:,0:3].astype('uint8'))
+    cv2.imshow(title+'_depth', (1000*img[:,:,3]).astype('uint8'))
 
 if __name__ == '__main__':
     # Camera movement
     dx = [0.05,0.03,0.3]
-    dq = Quat(axis=[0,0,1], angle=0.5)
+    dq = Quat(axis=[0,0,1], angle=0.).elements
 
     dxs = np.stack([dx, dx], axis=0)
     dqs = np.stack([dq, dq], axis=0)
@@ -47,7 +47,8 @@ if __name__ == '__main__':
     print("Time elapsed: {} seconds.".format(end-start))
 
     # Visualize
-    visualize(imgs[0,:])
-    visualize(imgs[1,:])
+    print(imgs.shape)
+    visualize(new_imgs[0,:], "img1")
+    visualize(new_imgs[1,:], "img2")
     cv2.waitKey(0)
     cv2.destroyAllWindows()
