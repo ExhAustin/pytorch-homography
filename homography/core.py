@@ -33,7 +33,7 @@ class DepthImgTransformer(object):
         dxs = np.array(dx)[None,:]
         dqs = np.array(list(dq))[None,:]
 
-        return self.transform_batch(imgs, dxs, dqs, rgbd)
+        return self.transform_batch(imgs, dxs, dqs, rgbd)[0,:]
 
     def transform_batch(self, imgs, dxs, dqs, rgbd=True):
         """
