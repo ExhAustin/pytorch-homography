@@ -11,7 +11,7 @@ class DepthImgTransformer(object):
         Camera transformation frame:
             +x axis - to the top of image
             +y axis - to the left of image
-            +z axis - into the image
+            +z axis - out of the image
     """
 
     def __init__(self, K):
@@ -44,19 +44,19 @@ class DepthImgTransformer(object):
         """
         N = imgs.shape[0]
         imgs = torch.from_numpy(imgs.astype('float32')).cuda()
-        dxs = torch.from_numpy(np.array(dxs).astype('float32'))
+        dxs = -torch.from_numpy(np.array(dxs).astype('float32'))
         dqs = torch.from_numpy(np.array(dqs).astype('float32'))
 
         # Transformation matrix
         H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
         H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
-        H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
-        H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
-        H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+        H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+        H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
+        H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
         H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
-        H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
-        H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
-        H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+        H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+        H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
+        H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
         H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
         H[:,0:3,3] = dxs
         H[:,3,3] = 1.
