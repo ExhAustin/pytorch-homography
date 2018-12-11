@@ -47,18 +47,21 @@ class DepthImgTransformer(object):
         dxs = -torch.from_numpy(np.array(dxs).astype('float32'))
         dqs = torch.from_numpy(np.array(dqs).astype('float32'))
 
-        # Transformation matrix
-        H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
-        H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
-        H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
-        H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
-        H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
-        H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
-        H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
-        H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
-        H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
-        H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
-        H[:,0:3,3] = dxs
-        H[:,3,3] = 1.
+        with torch.no_grad():
+            # Transformation matrix
+            H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
+            H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
+            H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+            H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
+            H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
+            H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
+            H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+            H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
+            H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
+            H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
+            H[:,0:3,3] = dxs
+            H[:,3,3] = 1.
 
-        return self._compute_homography(imgs, H)
+            ans = self._compute_homography(imgs, H)
+
+        return ans
