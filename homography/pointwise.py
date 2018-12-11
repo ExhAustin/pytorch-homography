@@ -2,7 +2,7 @@ import numpy as np
 from pyquaternion import Quaternion as Quat
 import torch
 
-from core import DepthImgTransformer
+from .core import DepthImgTransformer
 from .utils.interpolation import PointInterp2d
 
 class PointwiseHomographyTransformer(DepthImgTransformer):

@@ -4,7 +4,7 @@ import cv2
 import torch
 import torchvision
 
-from core import DepthImgTransformer
+from .core import DepthImgTransformer
 from .utils.image_warp import warp_img_batch
 
 class PlanarHomographyTransformer(DepthImgTransformer):
