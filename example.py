@@ -25,8 +25,8 @@ def visualize(img, title=""):
 
 if __name__ == '__main__':
     # Camera movement
-    dx = [0.0,0.0,0.0]
-    dq = Quat(axis=[1,0,0], angle=0.5).elements
+    dx = [0.0,0.0,0.1]
+    dq = Quat(axis=[0,0,1], angle=0.5).elements
 
     dxs = np.stack([dx, dx], axis=0)
     dqs = np.stack([dq, dq], axis=0)
