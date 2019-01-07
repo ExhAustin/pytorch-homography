@@ -17,10 +17,10 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         imgs1 = torch.empty(imgs0.shape, dtype=torch.float32).cuda()
 
         # Estimate depth of entire image
-        w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2)).cuda()
-        w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32).cuda()
+        w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2))
+        w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32)
         w0 = w_sum / w_valid
-        dw = torch.tensor(-H[:,2,3], dtype=torch.float32).cuda() #assume orthogonal
+        dw = -H[:,2,3] #assume orthogonal
         w1 = w0 + dw
 
         # Projective transformation matrix

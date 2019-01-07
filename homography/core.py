@@ -44,8 +44,8 @@ class DepthImgTransformer(object):
         """
         N = imgs.shape[0]
         imgs = torch.from_numpy(imgs.astype('float32')).cuda()
-        dxs = -torch.from_numpy(np.array(dxs).astype('float32'))
-        dqs = torch.from_numpy(np.array(dqs).astype('float32'))
+        dxs = -torch.from_numpy(np.array(dxs).astype('float32')).cuda()
+        dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
 
         with torch.no_grad():
             # Transformation matrix
