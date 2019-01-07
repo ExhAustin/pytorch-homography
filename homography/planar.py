@@ -38,4 +38,4 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         imgs1 = cv2.warpPerspective(imgs[:,:,0:3], M_np, dsize=(img_dims[1], img_dims[0]))
         """
 
-        return imgs1.cpu().numpy()
+        return imgs1

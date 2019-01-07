@@ -8,7 +8,12 @@ class DepthImgTransformer(object):
     """
     Base class for image transformations
 
-        Camera transformation frame:
+        Input image format (img):
+             origin - bottom left corner
+            +x axis - to the right of image
+            +y axis - to the top of image
+
+        Input camera transformation (dx, dq): TODO
             +x axis - to the top of image
             +y axis - to the left of image
             +z axis - out of the image
@@ -22,7 +27,7 @@ class DepthImgTransformer(object):
         except ValueError:
             print("Error: Intrinsic matrix not invertible.")
 
-    def transform(self, img, dx, dq, rgbd=True):
+    def transform(self, img, dx, dq, rgbd=True, to_numpy=True):
         """
         img: [width, height, num_channels] (num_channels = (4 if rgbd else 1))
         dx: camera translation
@@ -33,9 +38,9 @@ class DepthImgTransformer(object):
         dxs = np.array(dx)[None,:]
         dqs = np.array(list(dq))[None,:]
 
-        return self.transform_batch(imgs, dxs, dqs, rgbd)[0,:]
+        return self.transform_batch(imgs, dxs, dqs, rgbd, to_numpy)[0,:]
 
-    def transform_batch(self, imgs, dxs, dqs, rgbd=True):
+    def transform_batch(self, imgs, dxs, dqs, rgbd=True, to_numpy=True):
         """
         imgs: [N, width, height, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
@@ -43,12 +48,14 @@ class DepthImgTransformer(object):
         rgbd: boolean value indicating whether color channels exist
         """
         N = imgs.shape[0]
+
+        # Preprocess to tensors
         imgs = torch.from_numpy(imgs.astype('float32')).cuda()
         dxs = -torch.from_numpy(np.array(dxs).astype('float32')).cuda()
         dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
 
         with torch.no_grad():
-            # Transformation matrix
+            # Build transformation matrix
             H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
             H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
             H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
@@ -62,6 +69,11 @@ class DepthImgTransformer(object):
             H[:,0:3,3] = dxs
             H[:,3,3] = 1.
 
-            ans = self._compute_homography(imgs, H)
+            # Compute homography
+            imgs_out = self._compute_homography(imgs, H)
 
-        return ans
+        # Convert to numpy
+        if to_numpy:
+            imgs_out = imgs_out.cpu().numpy()
+
+        return imgs_out

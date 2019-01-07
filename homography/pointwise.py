@@ -43,4 +43,4 @@ class PointwiseHomographyTransformer(DepthImgTransformer):
             points_v1 = interpolator.query_batch(points_i0[:,0,:], points_i0[:,1,:])
             imgs1[k,:,:,:] = points_v1.view(img_dims[0], img_dims[1], channels)
 
-        return imgs1.cpu().numpy()
+        return imgs1
