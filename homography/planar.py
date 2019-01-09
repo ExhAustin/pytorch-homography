@@ -32,10 +32,5 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         # Transform image & update depth
         imgs1 = warp_img_batch(imgs0, M)
         imgs1[:,:,:,3] = imgs1[:,:,:,3] + dw.view(-1,1,1) #assume orthogonal
-        """
-        imgs = imgs0[0,:,:,:].squeeze().cpu().numpy()
-        M_np = M[0,:,:].cpu().numpy()
-        imgs1 = cv2.warpPerspective(imgs[:,:,0:3], M_np, dsize=(img_dims[1], img_dims[0]))
-        """
 
         return imgs1
