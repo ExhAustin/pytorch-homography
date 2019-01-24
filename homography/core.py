@@ -33,6 +33,8 @@ class DepthImgTransformer(object):
         dx: camera translation
         dq: camera rotation in quaternion <w,x,y,z>
         rgbd: boolean value indicating whether color channels exist
+
+        Note: input images are in cv2 format (top-left corner as origin)
         """
         imgs = np.array(img)[None,:]
         dxs = np.array(dx)[None,:]
@@ -42,12 +44,17 @@ class DepthImgTransformer(object):
 
     def transform_batch(self, imgs, dxs, dqs, rgbd=True, to_numpy=True):
         """
-        imgs: [N, width, height, num_channels] (num_channels = (4 if rgbd else 1))
+        imgs: [N, height, width, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
         dqs: camera rotations in quaternion <w,x,y,z> [N, 4]
         rgbd: boolean value indicating whether color channels exist
+
+        Note: input images are in cv2 format (top-left corner as origin)
         """
         N = imgs.shape[0]
+
+        # Convert format
+        imgs = np.flip(imgs, axis=1).swapaxes(1,2)
 
         # Preprocess to tensors
         imgs = torch.from_numpy(imgs.astype('float32')).cuda()
@@ -75,5 +82,8 @@ class DepthImgTransformer(object):
         # Convert to numpy
         if to_numpy:
             imgs_out = imgs_out.cpu().numpy()
+
+        # Convert format
+        imgs_out = np.flip(imgs_out.swapaxes(1,2), axis=1)
 
         return imgs_out
