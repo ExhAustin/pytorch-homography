@@ -8,7 +8,7 @@ class DepthImgTransformer(object):
     """
     Base class for image transformations
 
-        Input image format (img):
+        Image format (img):
              origin - bottom left corner
             +x axis - right
             +y axis - up
@@ -54,7 +54,7 @@ class DepthImgTransformer(object):
         N = imgs.shape[0]
 
         # Convert format
-        imgs = np.flip(imgs, axis=1).swapaxes(1,2)
+        imgs = np.flip(imgs.swapaxes(1,2), axis=1)
 
         # Preprocess to tensors
         imgs = torch.from_numpy(imgs.astype('float32')).cuda()
@@ -65,13 +65,13 @@ class DepthImgTransformer(object):
             # Build transformation matrix
             H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
             H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
-            H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
-            H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
-            H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+            H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+            H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
+            H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
             H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
-            H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
-            H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
-            H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+            H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+            H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
+            H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
             H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
             H[:,0:3,3] = dxs
             H[:,3,3] = 1.
@@ -84,6 +84,6 @@ class DepthImgTransformer(object):
             imgs_out = imgs_out.cpu().numpy()
 
         # Convert format
-        imgs_out = np.flip(imgs_out.swapaxes(1,2), axis=1)
+        imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
 
         return imgs_out

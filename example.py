@@ -21,12 +21,12 @@ def load_image(rgb_file, depth_file):
 
 def visualize(img, title=""):
     cv2.imshow(title+'_rgb', img[:,:,0:3].astype('uint8'))
-    cv2.imshow(title+'_depth', (1000*img[:,:,3]).astype('uint8'))
+    #cv2.imshow(title+'_depth', (1000*img[:,:,3]).astype('uint8'))
 
 if __name__ == '__main__':
     # Camera movement
-    dx = [0.0,0.0,0.1]
-    dq = Quat(axis=[0,0,1], angle=0.5).elements
+    dx = [0.,0.,0.]
+    dq = Quat(axis=[0,0,1], angle=0.3).elements
 
     dxs = np.stack([dx, dx], axis=0)
     dqs = np.stack([dq, dq], axis=0)
