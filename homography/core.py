@@ -27,7 +27,7 @@ class DepthImgTransformer(object):
         except ValueError:
             print("Error: Intrinsic matrix not invertible.")
 
-    def transform(self, img, dx, dq, rgbd=True, to_numpy=True):
+    def transform(self, img, dx, dq, rgbd=True, numpy_io=True):
         """
         img: [width, height, num_channels] (num_channels = (4 if rgbd else 1))
         dx: camera translation
@@ -40,9 +40,9 @@ class DepthImgTransformer(object):
         dxs = np.array(dx)[None,:]
         dqs = np.array(list(dq))[None,:]
 
-        return self.transform_batch(imgs, dxs, dqs, rgbd, to_numpy)[0,:]
+        return self.transform_batch(imgs, dxs, dqs, rgbd, numpy_io)[0,:]
 
-    def transform_batch(self, imgs, dxs, dqs, rgbd=True, to_numpy=True):
+    def transform_batch(self, imgs, dxs, dqs, rgbd=True, numpy_io=True):
         """
         imgs: [N, height, width, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
@@ -54,13 +54,22 @@ class DepthImgTransformer(object):
         N = imgs.shape[0]
 
         # Convert format
-        imgs = np.flip(imgs.swapaxes(1,2), axis=1)
+        if numpy_io:
+            imgs = np.flip(imgs.swapaxes(1,2), axis=1)
+        else:
+            imgs = torch.flip(imgs.permute(0,2,1,3), dims=[1])
 
         # Preprocess to tensors
-        imgs = torch.from_numpy(imgs.astype('float32')).cuda()
-        dxs = torch.from_numpy(np.array(dxs).astype('float32')).cuda()
-        dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
+        if numpy_io:
+            imgs = torch.from_numpy(imgs.astype('float32')).cuda()
+            dxs = torch.from_numpy(np.array(dxs).astype('float32')).cuda()
+            dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
+        else:
+            imgs = imgs.cuda()
+            dxs = dxs.cuda()
+            dqs = dqs.cuda()
 
+        # Compute
         with torch.no_grad():
             # Build transformation matrix
             H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
@@ -79,11 +88,11 @@ class DepthImgTransformer(object):
             # Compute homography
             imgs_out = self._compute_homography(imgs, H)
 
-        # Convert to numpy
-        if to_numpy:
-            imgs_out = imgs_out.cpu().numpy()
-
         # Convert format
-        imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
+        if numpy_io:
+            imgs_out = imgs_out.cpu().numpy()
+            imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
+        else:
+            imgs = torch.flip(imgs, dims=[1]).permute(0,2,1,3)
 
         return imgs_out
