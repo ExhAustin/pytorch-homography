@@ -8,7 +8,7 @@ def warp_img(img, M):
     imgs = img.unsqueeze(0)
     M = M.unsqueeze(0)
 
-    return warp_img_batch(img, M)
+    return warp_img_batch(img, M).squeeze()
 
 def warp_img_batch(imgs, M):
     """

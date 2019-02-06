@@ -42,7 +42,7 @@ class DepthImgTransformer(object):
 
         return self.transform_batch(imgs, dxs, dqs, rgbd, numpy_io)[0,:]
 
-    def transform_batch(self, imgs, dxs, dqs, rgbd=True, numpy_io=True):
+    def transform_batch(self, imgs, dxs, dqs, rgbd=True, gpu=True):
         """
         imgs: [N, height, width, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
@@ -54,20 +54,20 @@ class DepthImgTransformer(object):
         N = imgs.shape[0]
 
         # Convert format
-        if numpy_io:
-            imgs = np.flip(imgs.swapaxes(1,2), axis=1)
-        else:
+        if gpu:
             imgs = torch.flip(imgs.permute(0,2,1,3), dims=[1])
+        else:
+            imgs = np.flip(imgs.swapaxes(1,2), axis=1)
 
         # Preprocess to tensors
-        if numpy_io:
-            imgs = torch.from_numpy(imgs.astype('float32')).cuda()
-            dxs = torch.from_numpy(np.array(dxs).astype('float32')).cuda()
-            dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
-        else:
+        if gpu:
             imgs = imgs.cuda()
             dxs = dxs.cuda()
             dqs = dqs.cuda()
+        else:
+            imgs = torch.from_numpy(imgs.astype('float32')).cuda()
+            dxs = torch.from_numpy(np.array(dxs).astype('float32')).cuda()
+            dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
 
         # Compute
         with torch.no_grad():
@@ -89,10 +89,10 @@ class DepthImgTransformer(object):
             imgs_out = self._compute_homography(imgs, H)
 
         # Convert format
-        if numpy_io:
+        if gpu:
+            imgs_out = torch.flip(imgs_out, dims=[1]).permute(0,2,1,3)
+        else:
             imgs_out = imgs_out.cpu().numpy()
             imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
-        else:
-            imgs = torch.flip(imgs, dims=[1]).permute(0,2,1,3)
 
         return imgs_out
