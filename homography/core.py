@@ -27,7 +27,7 @@ class DepthImgTransformer(object):
         except ValueError:
             print("Error: Intrinsic matrix not invertible.")
 
-    def transform(self, img, dx, dq, rgbd=True, numpy_io=True):
+    def transform(self, img, dx, dq, rgbd=True, gpu=True):
         """
         img: [width, height, num_channels] (num_channels = (4 if rgbd else 1))
         dx: camera translation
@@ -40,7 +40,7 @@ class DepthImgTransformer(object):
         dxs = np.array(dx)[None,:]
         dqs = np.array(list(dq))[None,:]
 
-        return self.transform_batch(imgs, dxs, dqs, rgbd, numpy_io)[0,:]
+        return self.transform_batch(imgs, dxs, dqs, rgbd, gpu)[0,:]
 
     def transform_batch(self, imgs, dxs, dqs, rgbd=True, gpu=True):
         """
