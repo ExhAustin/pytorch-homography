@@ -4,6 +4,8 @@ from pyquaternion import Quaternion as Quat
 import torch
 import torchvision
 
+from .utils.image_warp import ImageWarp
+
 class DepthImgTransformer(object):
     """
     Base class for image transformations
@@ -26,6 +28,9 @@ class DepthImgTransformer(object):
             self.Kinv = torch.inverse(self.K)
         except ValueError:
             print("Error: Intrinsic matrix not invertible.")
+
+        # Image warper
+        self.image_warp = ImageWarp()
 
     def transform(self, img, dx, dq, rgbd=True, gpu=True):
         """

@@ -5,7 +5,6 @@ import torch
 import torchvision
 
 from .core import DepthImgTransformer
-from .utils.image_warp import warp_img_batch
 
 class PlanarHomographyTransformer(DepthImgTransformer):
 
@@ -30,7 +29,7 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         M = (w0/w1).view(-1,1,1) * torch.matmul(self.K, x)
 
         # Transform image & update depth
-        imgs1 = warp_img_batch(imgs0, M)
+        imgs1 = self.image_warp.warp_batch(imgs0, M)
         imgs1[:,:,:,3] = imgs1[:,:,:,3] + dw.view(-1,1,1) #assume orthogonal
 
         return imgs1
