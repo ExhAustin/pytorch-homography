@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     transformer = PlanarHomographyTransformer(K)
     #new_img = transformer.transform(img1, dx, dq)
-    new_imgs = transformer.transform_batch(imgs, dxs, dqs)
+    new_imgs = transformer.transform_batch(imgs, dxs, dqs, gpu=False)
 
     end = time.time()
     print("Time elapsed: {} seconds.".format(end-start))

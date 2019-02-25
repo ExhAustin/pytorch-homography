@@ -9,13 +9,13 @@ class DepthImgTransformer(object):
     Base class for image transformations
 
         Image format (img):
-             origin - bottom left corner
+             origin - top left corner
             +x axis - right
-            +y axis - up
+            +y axis - down
 
         Input camera transformation (dx, dq):
             +x axis - to the right of image
-            +y axis - to the top of image
+            +y axis - to the bottom of image
             +z axis - into the image
     """
 
@@ -55,9 +55,11 @@ class DepthImgTransformer(object):
 
         # Convert format
         if gpu:
-            imgs = torch.flip(imgs.permute(0,2,1,3), dims=[1])
+            #imgs = torch.flip(imgs.permute(0,2,1,3), dims=[1])
+            imgs = imgs.permute(0,2,1,3)
         else:
-            imgs = np.flip(imgs.swapaxes(1,2), axis=1)
+            #imgs = np.flip(imgs.swapaxes(1,2), axis=1)
+            imgs = imgs.swapaxes(1,2)
 
         # Preprocess to tensors
         if gpu:
@@ -82,7 +84,7 @@ class DepthImgTransformer(object):
             H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
             H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
             H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
-            H[:,0:3,3] = dxs
+            H[:,0:3,3] = -dxs
             H[:,3,3] = 1.
 
             # Compute homography
@@ -90,9 +92,11 @@ class DepthImgTransformer(object):
 
         # Convert format
         if gpu:
-            imgs_out = torch.flip(imgs_out, dims=[1]).permute(0,2,1,3)
+            #imgs_out = torch.flip(imgs_out, dims=[1]).permute(0,2,1,3)
+            imgs_out = imgs_out.permute(0,2,1,3)
         else:
             imgs_out = imgs_out.cpu().numpy()
-            imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
+            #imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
+            imgs_out = imgs_out.swapaxes(1,2)
 
         return imgs_out
