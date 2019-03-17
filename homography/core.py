@@ -32,7 +32,7 @@ class DepthImgTransformer(object):
         # Image warper
         self.image_warp = ImageWarp()
 
-    def transform(self, img, dx, dq, rgbd=True, gpu=False):
+    def transform(self, img, dx, dq, rgbd=True, gpu=False, depth=None):
         """
         img: [width, height, num_channels] (num_channels = (4 if rgbd else 1))
         dx: camera translation
@@ -47,7 +47,7 @@ class DepthImgTransformer(object):
 
         return self.transform_batch(imgs, dxs, dqs, rgbd, gpu)[0,:]
 
-    def transform_batch(self, imgs, dxs, dqs, rgbd=True, gpu=False):
+    def transform_batch(self, imgs, dxs, dqs, rgbd=True, gpu=False, depth=None):
         """
         imgs: [N, height, width, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
@@ -93,7 +93,7 @@ class DepthImgTransformer(object):
             H[:,3,3] = 1.
 
             # Compute homography
-            imgs_out = self._compute_homography(imgs, H)
+            imgs_out = self._compute_homography(imgs, H, depth)
 
         # Convert format
         if gpu:

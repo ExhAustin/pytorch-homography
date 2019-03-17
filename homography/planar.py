@@ -8,7 +8,7 @@ from .core import DepthImgTransformer
 
 class PlanarHomographyTransformer(DepthImgTransformer):
 
-    def _compute_homography(self, imgs0, H):
+    def _compute_homography(self, imgs0, H, depth=None):
         img_dims = imgs0.shape[1:3]
         N = imgs0.shape[0]
         n_channels = imgs0.shape[3]
@@ -16,9 +16,12 @@ class PlanarHomographyTransformer(DepthImgTransformer):
         imgs1 = torch.empty(imgs0.shape, dtype=torch.float32).cuda()
 
         # Estimate depth of entire image
-        w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2))
-        w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32)
-        w0 = w_sum / w_valid
+        if depth is None:
+            w_sum = torch.sum(imgs0[:,:,:,3], dim=(1,2))
+            w_valid = torch.sum(imgs0[:,:,:,3]!=0, dim=(1,2), dtype=torch.float32)
+            w0 = w_sum / w_valid
+        else:
+            w0 = depth
         dw = H[:,2,3] #assume orthogonal
         w1 = w0 + dw
 

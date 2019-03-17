@@ -7,7 +7,7 @@ from .utils.interpolation import PointInterp2d
 
 class PointwiseHomographyTransformer(DepthImgTransformer):
 
-    def _compute_homography(self, imgs0, H):
+    def _compute_homography(self, imgs0, H, depth=None):
         img_dims = imgs0.shape[1:3]
         N = imgs0.shape[0]
         n_channels = imgs0.shape[3]
