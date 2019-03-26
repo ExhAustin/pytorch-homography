@@ -72,9 +72,12 @@ class DepthImgTransformer(object):
             dxs = dxs.cuda()
             dqs = dqs.cuda()
         else:
-            imgs = torch.from_numpy(imgs.astype('float32')).cuda()
-            dxs = torch.from_numpy(np.array(dxs).astype('float32')).cuda()
-            dqs = torch.from_numpy(np.array(dqs).astype('float32')).cuda()
+            imgs = torch.from_numpy(imgs.astype(np.float32)).cuda()
+            dxs = torch.from_numpy(np.array(dxs).astype(np.float32)).cuda()
+            dqs = torch.from_numpy(np.array(dqs).astype(np.float32)).cuda()
+
+        if depth is not None:
+            depth = torch.from_numpy(np.array(depth).astype(np.float32)).cuda()
 
         # Compute
         with torch.no_grad():
@@ -97,11 +100,9 @@ class DepthImgTransformer(object):
 
         # Convert format
         if gpu:
-            #imgs_out = torch.flip(imgs_out, dims=[1]).permute(0,2,1,3)
             imgs_out = imgs_out.permute(0,2,1,3)
         else:
             imgs_out = imgs_out.cpu().numpy()
-            #imgs_out = np.flip(imgs_out, axis=1).swapaxes(1,2)
             imgs_out = imgs_out.swapaxes(1,2)
 
         return imgs_out
