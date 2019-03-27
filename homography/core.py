@@ -87,7 +87,7 @@ class DepthImgTransformer(object):
 
         # Compute
         with torch.no_grad():
-            # Build transformation matrix
+            # Build transformation matrix (inverse camera movement)
             H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
             if Ts is None:
                 H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
@@ -102,7 +102,9 @@ class DepthImgTransformer(object):
                 H[:,0:3,3] = -dxs
                 H[:,3,3] = 1.
             else:
-                H = Ts
+                H[:,0:3,0:3] = Ts[:,0:3,0:3].permute(0,2,1)
+                H[:,0:3,3] = -Ts[:,0:3,3]
+                H[:,3,3] = 1.
 
             # Compute homography
             imgs_out = self._compute_homography(imgs, H, depth)
