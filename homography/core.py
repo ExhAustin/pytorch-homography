@@ -47,7 +47,7 @@ class DepthImgTransformer(object):
 
         return self.transform_batch(imgs, dxs, dqs, rgbd, gpu, depth)[0,:]
 
-    def transform_batch(self, imgs, dxs, dqs, rgbd=True, gpu=False, depth=None):
+    def transform_batch(self, imgs, Ts=None, dxs=None, dqs=None, rgbd=True, gpu=False, depth=None):
         """
         imgs: [N, height, width, num_channels] (num_channels = (4 if rgbd else 1))
         dxs: camera translations [N, 3]
@@ -69,12 +69,18 @@ class DepthImgTransformer(object):
         # Preprocess to tensors
         if gpu:
             imgs = imgs.cuda()
-            dxs = dxs.cuda()
-            dqs = dqs.cuda()
+            if Ts is None:
+                dxs = dxs.cuda()
+                dqs = dqs.cuda()
+            else:
+                Ts = Ts.cuda()
         else:
             imgs = torch.from_numpy(imgs.astype(np.float32)).cuda()
-            dxs = torch.from_numpy(np.array(dxs).astype(np.float32)).cuda()
-            dqs = torch.from_numpy(np.array(dqs).astype(np.float32)).cuda()
+            if Ts is None:
+                dxs = torch.from_numpy(np.array(dxs).astype(np.float32)).cuda()
+                dqs = torch.from_numpy(np.array(dqs).astype(np.float32)).cuda()
+            else:
+                Ts = torch.from_numpy(np.array(Ts).astype(np.float32)).cuda()
 
         if depth is not None:
             depth = torch.from_numpy(np.array(depth).astype(np.float32)).cuda()
@@ -83,17 +89,20 @@ class DepthImgTransformer(object):
         with torch.no_grad():
             # Build transformation matrix
             H = torch.zeros([N, 4, 4], dtype=torch.float32).cuda()
-            H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
-            H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
-            H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
-            H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
-            H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
-            H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
-            H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
-            H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
-            H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
-            H[:,0:3,3] = -dxs
-            H[:,3,3] = 1.
+            if Ts is None:
+                H[:,0,0] = 1. - 2*(dqs[:,2]**2 + dqs[:,3]**2)
+                H[:,0,1] = 2*(dqs[:,1]*dqs[:,2] + dqs[:,3]*dqs[:,0])
+                H[:,0,2] = 2*(dqs[:,1]*dqs[:,3] - dqs[:,2]*dqs[:,0])
+                H[:,1,0] = 2*(dqs[:,1]*dqs[:,2] - dqs[:,3]*dqs[:,0])
+                H[:,1,1] = 1. - 2*(dqs[:,1]**2 + dqs[:,3]**2)
+                H[:,1,2] = 2*(dqs[:,2]*dqs[:,3] + dqs[:,1]*dqs[:,0])
+                H[:,2,0] = 2*(dqs[:,1]*dqs[:,3] + dqs[:,2]*dqs[:,0])
+                H[:,2,1] = 2*(dqs[:,2]*dqs[:,3] - dqs[:,1]*dqs[:,0])
+                H[:,2,2] = 1. - 2*(dqs[:,1]**2 + dqs[:,2]**2)
+                H[:,0:3,3] = -dxs
+                H[:,3,3] = 1.
+            else:
+                H = Ts
 
             # Compute homography
             imgs_out = self._compute_homography(imgs, H, depth)
